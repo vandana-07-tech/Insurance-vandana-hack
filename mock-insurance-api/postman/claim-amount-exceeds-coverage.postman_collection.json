@@ -1,0 +1,50 @@
+{
+  "info": {
+    "name": "Insurance Claim - Amount Exceeds Coverage",
+    "description": "Validates rejection of a claim amount above policy coverage.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Reject claim amount above policy coverage",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"policyNumber\": \"POL10001\",\n  \"customerId\": \"CUS1001\",\n  \"vehicleNumber\": \"VH1001\",\n  \"accidentDate\": \"2026-09-20\",\n  \"claimAmount\": 150000,\n  \"claimType\": \"ACCIDENT\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/claims",
+        "description": "The claim amount of INR 150000 exceeds the policy coverage of INR 100000."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Over-limit claim returns HTTP 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test(\"Over-limit claim is rejected\", function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response.status).to.eql(\"REJECTED\");",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

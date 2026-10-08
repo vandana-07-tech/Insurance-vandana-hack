@@ -1,0 +1,141 @@
+{
+  "info": {
+    "name": "Insurance Fraud Scenarios (Data-Driven)",
+    "description": "Runs each record in test-data/fraud-scenarios.json as a POST /claims API test. In Postman, set environment variable baseUrl (for example, http://localhost:3000), then run this collection with fraud-scenarios.json as the JSON data file. Status codes and business outcomes are derived from each record's expectedStatus. Some scenarios are intentionally expected to fail until their validation rules are implemented by the API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Submit fraud scenario from iteration data",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"claimId\": \"{{claimId}}\",\n  \"policyId\": \"{{policyNumber}}\",\n  \"customerId\": \"{{customerId}}\",\n  \"vehicleNumber\": \"{{vehicleNumber}}\",\n  \"claimAmount\": {{claimAmount}},\n  \"policyLimit\": {{policyLimit}},\n  \"policyStatus\": \"{{policyStatus}}\",\n  \"incidentDate\": \"{{accidentDate}}\",\n  \"policyStartDate\": \"{{policyStartDate}}\",\n  \"policyEndDate\": \"{{policyEndDate}}\",\n  \"claimType\": \"{{claimType}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/claims",
+        "description": "Uses the current Postman Runner iteration from fraud-scenarios.json. Duplicate scenarios submit setupClaims first."
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const scenario = pm.iterationData.toObject();",
+              "const baseUrl = pm.environment.get('baseUrl');",
+              "const setupClaims = scenario.setupClaims || scenario.relatedClaims || [];",
+              "const headers = { 'Content-Type': 'application/json' };",
+              "",
+              "if (!baseUrl) {",
+              "    throw new Error('Set the baseUrl environment variable before running this collection.');",
+              "}",
+              "",
+              "for (const setupClaim of setupClaims) {",
+              "    const setupPayload = {",
+              "        claimId: setupClaim.claimId,",
+              "        policyId: setupClaim.policyNumber || scenario.policyNumber,",
+              "        customerId: setupClaim.customerId || scenario.customerId,",
+              "        claimAmount: setupClaim.claimAmount,",
+              "        policyLimit: scenario.policyLimit || 100000,",
+              "        policyStatus: 'ACTIVE',",
+              "        incidentDate: setupClaim.accidentDate,",
+              "        vehicleNumber: setupClaim.vehicleNumber,",
+              "        claimType: setupClaim.claimType",
+              "    };",
+              "    const setupResponse = await pm.sendRequest({",
+              "        url: baseUrl + '/claims',",
+              "        method: 'POST',",
+              "        header: headers,",
+              "        body: { mode: 'raw', raw: JSON.stringify(setupPayload) }",
+              "    });",
+              "    pm.expect(setupResponse.code, 'setup claim submission').to.be.within(200, 299);",
+              "}",
+              "",
+              "const payload = {",
+              "    claimId: scenario.claimId,",
+              "    policyId: scenario.policyNumber,",
+              "    customerId: scenario.customerId,",
+              "    claimAmount: scenario.claimAmount,",
+              "    policyLimit: scenario.policyLimit,",
+              "    policyStatus: scenario.policyStatus,",
+              "    incidentDate: scenario.accidentDate,",
+              "    vehicleNumber: scenario.vehicleNumber,",
+              "    claimType: scenario.claimType,",
+              "    policyStartDate: scenario.policyStartDate,",
+              "    policyEndDate: scenario.policyEndDate",
+              "};",
+              "for (const key of Object.keys(payload)) {",
+              "    if (payload[key] === null || payload[key] === undefined) {",
+              "        delete payload[key];",
+              "    }",
+              "}",
+              "pm.variables.set('claimPayload', JSON.stringify(payload));",
+              "pm.variables.set('expectedScenarioId', scenario.scenarioId);",
+              "pm.variables.set('expectedBusinessStatus', scenario.expectedStatus);",
+              "pm.variables.set('expectedHttpStatus', scenario.expectedStatus === 'REJECTED' ? 400 : 201);",
+              "pm.variables.set('expectedFraudRule', ({",
+              "    'FS-003': 'RULE-002',",
+              "    'FS-004': 'RULE-004',",
+              "    'FS-005': 'RULE-002',",
+              "    'FS-006': 'RULE-001',",
+              "    'FS-007': 'RULE-003'",
+              "})[scenario.scenarioId] || '');"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const scenarioId = pm.variables.get('expectedScenarioId');",
+              "const expectedStatus = pm.variables.get('expectedBusinessStatus');",
+              "const expectedHttpStatus = Number(pm.variables.get('expectedHttpStatus'));",
+              "const expectedFraudRule = pm.variables.get('expectedFraudRule');",
+              "const response = pm.response.json();",
+              "",
+              "pm.test(scenarioId + ': expected HTTP status', function () {",
+              "    pm.response.to.have.status(expectedHttpStatus);",
+              "});",
+              "",
+              "pm.test(scenarioId + ': response contains claim ID', function () {",
+              "    pm.expect(response).to.have.property('claimId');",
+              "});",
+              "",
+              "pm.test(scenarioId + ': business status matches test data', function () {",
+              "    pm.expect(response.status).to.eql(expectedStatus);",
+              "});",
+              "",
+              "if (expectedFraudRule) {",
+              "    pm.test(scenarioId + ': matching fraud rule is returned', function () {",
+              "        pm.expect(response.fraudRule).to.eql(expectedFraudRule);",
+              "    });",
+              "} else {",
+              "    pm.test(scenarioId + ': no fraud rule is returned when not specified', function () {",
+              "        pm.expect(response.fraudRule).to.be.oneOf([null, undefined]);",
+              "    });",
+              "}",
+              "",
+              "pm.test(scenarioId + ': response claim ID matches submitted data', function () {",
+              "    const submittedClaim = JSON.parse(pm.variables.get('claimPayload'));",
+              "    pm.expect(response.claimId).to.eql(submittedClaim.claimId);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

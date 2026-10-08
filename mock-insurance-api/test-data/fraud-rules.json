@@ -1,0 +1,22 @@
+[
+  {
+    "ruleId": "RULE-001",
+    "name": "Claim exceeds policy limit",
+    "riskScore": 30
+  },
+  {
+    "ruleId": "RULE-002",
+    "name": "Policy expired",
+    "riskScore": 30
+  },
+  {
+    "ruleId": "RULE-003",
+    "name": "Duplicate claim",
+    "riskScore": 40
+  },
+  {
+    "ruleId": "RULE-004",
+    "name": "Incident outside policy period",
+    "riskScore": 20
+  }
+]

@@ -1,0 +1,29 @@
+[
+  {
+    "claimId": "CLM1001",
+    "policyId": "POL1001",
+    "customerId": "CUS1001",
+    "claimAmount": 50000,
+    "policyLimit": 100000,
+    "policyStatus": "ACTIVE",
+    "incidentDate": "2026-09-15"
+  },
+  {
+    "claimId": "CLM1002",
+    "policyId": "POL1002",
+    "customerId": "CUS1002",
+    "claimAmount": 150000,
+    "policyLimit": 100000,
+    "policyStatus": "ACTIVE",
+    "incidentDate": "2026-09-15"
+  },
+  {
+    "claimId": "CLM1003",
+    "policyId": "POL1003",
+    "customerId": "CUS1003",
+    "claimAmount": 50000,
+    "policyLimit": 100000,
+    "policyStatus": "EXPIRED",
+    "incidentDate": "2026-09-15"
+  }
+]

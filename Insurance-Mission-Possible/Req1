@@ -1,0 +1,9 @@
+Story ID: INS-1456
+ 
+Business Rule:
+ 
+Reject claim if:
+ 
+Claim Amount > ₹100000
+and
+Policy Age < 30 Days

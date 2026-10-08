@@ -1,0 +1,432 @@
+{
+  "info": {
+    "_postman_id": "a04a2db0-77cb-45d5-bff1-370365393249",
+    "name": "Insurance Fraud  Testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58433635",
+    "_collection_link": "https://go.postman.co/collection/58433635-a04a2db0-77cb-45d5-bff1-370365393249?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "01 - Submit Genuine Claim",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Claim is accepted\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"ACCEPTED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"No fraud rule triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(null);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 50000,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Claim Exceeds Policy Limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Claim is flagged\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"FLAGGED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"RULE-001 is triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(\"RULE-001\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 150000,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Expired Policy",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function(){\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "const response = pm.response.json();\r",
+              "pm.test(\"Claim is flagged\", function(){\r",
+              "    pm.expect(response.status).to.eql(\"FLAGGED\");\r",
+              "});\r",
+              "\r",
+              "pm.test(\"Fraud rule is RULE-002\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(\"RULE-002\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 150000,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"EXPIRED\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Boundary - Below Limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Amount one below limit is accepted\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"ACCEPTED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"No fraud rule triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(null);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 99999,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Boundary - Equal Limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Amount equal to limit is accepted\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"ACCEPTED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"No fraud rule triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(null);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 100000,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "06 - Boundary - Above Limit",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Amount one above limit is flagged by RULE-001\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"FLAGGED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"RULE-001 is triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(\"RULE-001\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 100001,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Zero Claim Amount",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Zero amount does not exceed policy limit\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"ACCEPTED\");\r",
+              "});\r",
+              " \r",
+              "pm.test(\"No fraud rule triggered\", function () {\r",
+              "    pm.expect(response.fraudRule).to.eql(null);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": 0,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Negative Claim Amount",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              " \r",
+              "const response = pm.response.json();\r",
+              " \r",
+              "pm.test(\"Negative amount is rejected\", function () {\r",
+              "    pm.expect(response.status).to.eql(\"rejected\");\r",
+              "});\r",
+              "    \r",
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"claimId\": \"CLM1001\",\r\n    \"policyId\": \"POL1001\",\r\n    \"customerId\": \"CUS1001\",\r\n    \"claimAmount\": -1,\r\n    \"policyLimit\": 100000,\r\n    \"policyStatus\": \"ACTIVE\",\r\n    \"incidentDate\": \"2026-09-15\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/claims",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "claims"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

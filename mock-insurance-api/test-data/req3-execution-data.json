@@ -1,0 +1,18 @@
+[
+  { "scenarioId": "REQ3-01", "claimId": "SYN-REQ3-01", "customerId": "SYN-C-001", "vehicleNumber": "SYN-V-001", "claimAmount": 500, "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "201 ACCEPTED; no rule" },
+  { "scenarioId": "REQ3-02", "claimId": "SYN-REQ3-02-DUP", "customerId": "SYN-C-002", "vehicleNumber": "SYN-V-002", "claimAmount": 500, "policyLimit": 1000, "policyStatus": "ACTIVE", "submissions": 2, "expectedCurrentApi": "Both requests return 201 ACCEPTED; duplicate rule TBD" },
+  { "scenarioId": "REQ3-03", "claimIds": ["SYN-REQ3-03-A", "SYN-REQ3-03-B", "SYN-REQ3-03-C"], "customerId": "SYN-C-003", "vehicleNumber": "SYN-V-003", "claimAmount": 500, "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "All return 201 ACCEPTED; pattern detection TBD" },
+  { "scenarioId": "REQ3-04", "claimIds": ["SYN-REQ3-04-A", "SYN-REQ3-04-B"], "customerId": "SYN-C-004", "vehicleNumbers": ["SYN-V-004A", "SYN-V-004B"], "claimAmounts": [400, 600], "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "Both return 201 ACCEPTED; same-customer handling TBD" },
+  { "scenarioId": "REQ3-05", "claimIds": ["SYN-REQ3-05-A", "SYN-REQ3-05-B"], "customerIds": ["SYN-C-005A", "SYN-C-005B"], "vehicleNumber": "SYN-V-005", "claimAmounts": [400, 600], "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "Both return 201 ACCEPTED; same-vehicle handling TBD" },
+  { "scenarioId": "REQ3-06", "claimId": "SYN-REQ3-06", "blacklistTestMarker": "SYN-BL-MATCH-006", "expectedCurrentApi": "201 ACCEPTED; blacklist screen unavailable" },
+  { "scenarioId": "REQ3-07", "claimId": "SYN-REQ3-07", "watchlistTestMarker": "SYN-WL-MATCH-007", "expectedCurrentApi": "201 ACCEPTED; watchlist screen unavailable" },
+  { "scenarioId": "REQ3-08", "claimId": "SYN-REQ3-08", "customerId": "SYN-C-008-VARIANT", "identityTestMarker": "SYN-IDENTITY-VARIATION-008", "expectedCurrentApi": "201 ACCEPTED; identity validation unavailable" },
+  { "scenarioId": "REQ3-09", "claimId": "SYN-REQ3-09", "stagedAccidentTestMarker": "SYN-STAGED-ACCIDENT-009", "expectedCurrentApi": "201 ACCEPTED; accident analysis unavailable" },
+  { "scenarioId": "REQ3-10", "claimId": "SYN-REQ3-10", "claimAmount": 1001, "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "201 FLAGGED RULE-001" },
+  { "scenarioId": "REQ3-11", "claimId": "SYN-REQ3-11", "claimAmount": 1000, "policyLimit": 1000, "policyStatus": "ACTIVE", "expectedCurrentApi": "201 ACCEPTED; strict greater-than comparison" },
+  { "scenarioId": "REQ3-12", "claimId": "SYN-REQ3-12", "forgedDocumentTestMarker": "SYN-FORGED-DOC-012", "expectedCurrentApi": "201 ACCEPTED; document validation unavailable" },
+  { "scenarioId": "REQ3-13", "claimId": "SYN-REQ3-13", "claimAmount": 500, "policyLimit": 1000, "policyStatus": "EXPIRED", "expectedCurrentApi": "201 FLAGGED RULE-002" },
+  { "scenarioId": "REQ3-14", "claimId": "SYN-REQ3-14", "claimAmount": 1001, "policyLimit": 1000, "policyStatus": "EXPIRED", "expectedCurrentApi": "201 FLAGGED RULE-002 overrides RULE-001" },
+  { "scenarioId": "REQ3-15", "method": "GET", "claimId": "SYN-REQ3-01", "expectedCurrentApi": "200; matching stored claim returned" },
+  { "scenarioId": "REQ3-16", "method": "GET", "claimId": "SYN-REQ3-16-ABSENT", "expectedCurrentApi": "404 Claim not found" }
+]

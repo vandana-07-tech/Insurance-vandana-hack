@@ -1,0 +1,112 @@
+{
+  "schemaNote": "Req4 supplies no policy schema. The candidate payload below is synthetic and unvalidated; it must not be treated as a valid domain value.",
+  "expectedBusinessOutcome": "TBD for every scenario; confirm the API contract before asserting business behavior.",
+  "scenarios": [
+    {
+      "scenarioId": "REQ4-01",
+      "testName": "Create nominal candidate",
+      "method": "POST",
+      "path": "/policies",
+      "requestBody": { "policyNumber": "SYN-POL-REQ4-001" },
+      "bodyNote": "Candidate payload; unvalidated",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-02",
+      "testName": "Create with empty object",
+      "method": "POST",
+      "path": "/policies",
+      "requestBody": {},
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-03",
+      "testName": "Create with no body",
+      "method": "POST",
+      "path": "/policies",
+      "requestBody": null,
+      "bodyNote": "No request body",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-04",
+      "testName": "Update nominal candidate",
+      "method": "PUT",
+      "path": "/policies/SYN-POL-REQ4-001",
+      "requestBody": { "policyNumber": "SYN-POL-REQ4-001" },
+      "bodyNote": "Candidate payload; unvalidated",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-05",
+      "testName": "Update unknown synthetic ID",
+      "method": "PUT",
+      "path": "/policies/SYN-POL-REQ4-UNKNOWN",
+      "requestBody": { "policyNumber": "SYN-POL-REQ4-UNKNOWN" },
+      "bodyNote": "Candidate payload; unvalidated",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-06",
+      "testName": "Update with empty object",
+      "method": "PUT",
+      "path": "/policies/SYN-POL-REQ4-001",
+      "requestBody": {},
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-07",
+      "testName": "Cancel nominal synthetic ID",
+      "method": "DELETE",
+      "path": "/policies/SYN-POL-REQ4-001",
+      "requestBody": null,
+      "bodyNote": "No request body",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-08",
+      "testName": "Cancel unknown synthetic ID",
+      "method": "DELETE",
+      "path": "/policies/SYN-POL-REQ4-UNKNOWN",
+      "requestBody": null,
+      "bodyNote": "No request body",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-09",
+      "testName": "Cancel with no ID",
+      "method": "DELETE",
+      "path": "/policies/",
+      "requestBody": null,
+      "bodyNote": "No request body; no ID in path",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-10",
+      "testName": "Fetch nominal synthetic ID",
+      "method": "GET",
+      "path": "/policies/SYN-POL-REQ4-001",
+      "requestBody": null,
+      "bodyNote": "No request body",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-11",
+      "testName": "Fetch unknown synthetic ID",
+      "method": "GET",
+      "path": "/policies/SYN-POL-REQ4-UNKNOWN",
+      "requestBody": null,
+      "bodyNote": "No request body",
+      "expectedBusinessOutcome": "TBD"
+    },
+    {
+      "scenarioId": "REQ4-12",
+      "testName": "Fetch with no ID",
+      "method": "GET",
+      "path": "/policies/",
+      "requestBody": null,
+      "bodyNote": "No request body; no ID in path",
+      "expectedBusinessOutcome": "TBD"
+    }
+  ]
+}

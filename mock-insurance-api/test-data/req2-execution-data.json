@@ -1,0 +1,154 @@
+[
+  {
+    "scenarioId": "CLM-001",
+    "testName": "Baseline active-policy claim",
+    "method": "POST",
+    "path": "/claims",
+    "requestBody": {
+      "claimId": "SYN-CLM-001",
+      "policyNumber": "POL-SYN-001",
+      "customerId": "CUS-SYN-001",
+      "vehicleNumber": "VEH-SYN-001",
+      "accidentDate": "2026-09-15",
+      "claimAmount": 2500,
+      "claimType": "COLLISION",
+      "policyLimit": 10000,
+      "policyStatus": "ACTIVE"
+    },
+    "expectedHttpStatus": 201,
+    "expectedBody": {
+      "claimId": "SYN-CLM-001",
+      "status": "ACCEPTED",
+      "fraudRule": null
+    }
+  },
+  {
+    "scenarioId": "CLM-002",
+    "testName": "Claim amount exceeds policy limit",
+    "method": "POST",
+    "path": "/claims",
+    "requestBody": {
+      "claimId": "SYN-CLM-002",
+      "policyNumber": "POL-SYN-002",
+      "customerId": "CUS-SYN-002",
+      "vehicleNumber": "VEH-SYN-002",
+      "accidentDate": "2026-09-15",
+      "claimAmount": 12000,
+      "claimType": "COLLISION",
+      "policyLimit": 10000,
+      "policyStatus": "ACTIVE"
+    },
+    "expectedHttpStatus": 201,
+    "expectedBody": {
+      "claimId": "SYN-CLM-002",
+      "status": "FLAGGED",
+      "fraudRule": "RULE-001"
+    }
+  },
+  {
+    "scenarioId": "CLM-003",
+    "testName": "Expired policy",
+    "method": "POST",
+    "path": "/claims",
+    "requestBody": {
+      "claimId": "SYN-CLM-003",
+      "policyNumber": "POL-SYN-003",
+      "customerId": "CUS-SYN-003",
+      "vehicleNumber": "VEH-SYN-003",
+      "accidentDate": "2026-09-15",
+      "claimAmount": 2500,
+      "claimType": "COLLISION",
+      "policyLimit": 10000,
+      "policyStatus": "EXPIRED"
+    },
+    "expectedHttpStatus": 201,
+    "expectedBody": {
+      "claimId": "SYN-CLM-003",
+      "status": "FLAGGED",
+      "fraudRule": "RULE-002"
+    }
+  },
+  {
+    "scenarioId": "CLM-004",
+    "testName": "Both flag rules triggered; current precedence characterization",
+    "method": "POST",
+    "path": "/claims",
+    "requestBody": {
+      "claimId": "SYN-CLM-004",
+      "policyNumber": "POL-SYN-004",
+      "customerId": "CUS-SYN-004",
+      "vehicleNumber": "VEH-SYN-004",
+      "accidentDate": "2026-09-15",
+      "claimAmount": 12000,
+      "claimType": "COLLISION",
+      "policyLimit": 10000,
+      "policyStatus": "EXPIRED"
+    },
+    "expectedHttpStatus": 201,
+    "observedBody": {
+      "claimId": "SYN-CLM-004",
+      "status": "FLAGGED",
+      "fraudRule": "RULE-002"
+    },
+    "businessExpectation": "TBD"
+  },
+  {
+    "scenarioId": "CLM-005",
+    "testName": "Omitted fields characterization",
+    "method": "POST",
+    "path": "/claims",
+    "requestBody": {
+      "claimId": "SYN-CLM-005",
+      "policyNumber": "POL-SYN-005",
+      "policyLimit": 10000,
+      "policyStatus": "ACTIVE"
+    },
+    "omittedFields": ["customerId", "vehicleNumber", "accidentDate", "claimAmount", "claimType"],
+    "expectedHttpStatus": 201,
+    "observedBody": {
+      "claimId": "SYN-CLM-005",
+      "status": "ACCEPTED",
+      "fraudRule": null
+    },
+    "businessExpectation": "TBD"
+  },
+  {
+    "scenarioId": "CLM-006",
+    "testName": "Duplicate claim ID characterization",
+    "method": "POST",
+    "path": "/claims",
+    "submissionCount": 2,
+    "requestBody": {
+      "claimId": "SYN-CLM-006",
+      "policyNumber": "POL-SYN-006",
+      "customerId": "CUS-SYN-006",
+      "vehicleNumber": "VEH-SYN-006",
+      "accidentDate": "2026-09-15",
+      "claimAmount": 2500,
+      "claimType": "COLLISION",
+      "policyLimit": 10000,
+      "policyStatus": "ACTIVE"
+    },
+    "expectedHttpStatusPerSubmission": 201,
+    "observedBusinessStatusPerSubmission": "ACCEPTED",
+    "businessExpectation": "TBD"
+  },
+  {
+    "scenarioId": "CLM-016",
+    "testName": "Retrieve created claim",
+    "method": "GET",
+    "path": "/claims/SYN-CLM-001",
+    "expectedHttpStatus": 200,
+    "expectedClaimId": "SYN-CLM-001"
+  },
+  {
+    "scenarioId": "CLM-017",
+    "testName": "Retrieve unknown claim",
+    "method": "GET",
+    "path": "/claims/SYN-CLM-017",
+    "expectedHttpStatus": 404,
+    "expectedBody": {
+      "message": "Claim not found"
+    }
+  }
+]

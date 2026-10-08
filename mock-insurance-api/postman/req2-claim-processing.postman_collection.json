@@ -1,0 +1,89 @@
+{
+  "info": {
+    "name": "Req2 Claim Processing Validation",
+    "description": "Runnable checks for the routes currently implemented by the mock API. CLM-004, CLM-005, and CLM-006 characterize behavior where the business contract is not defined.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "CLM-001 Baseline active-policy claim",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-001\",\"policyNumber\":\"POL-SYN-001\",\"customerId\":\"CUS-SYN-001\",\"vehicleNumber\":\"VEH-SYN-001\",\"accidentDate\":\"2026-09-15\",\"claimAmount\":2500,\"claimType\":\"COLLISION\",\"policyLimit\":10000,\"policyStatus\":\"ACTIVE\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-001 returns accepted claim', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-001', status: 'ACCEPTED', fraudRule: null });", "});"] } }]
+    },
+    {
+      "name": "CLM-002 Amount above policy limit",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-002\",\"claimAmount\":12000,\"policyLimit\":10000,\"policyStatus\":\"ACTIVE\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-002 flags amount above limit with RULE-001', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-002', status: 'FLAGGED', fraudRule: 'RULE-001' });", "});"] } }]
+    },
+    {
+      "name": "CLM-003 Expired policy",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-003\",\"claimAmount\":2500,\"policyLimit\":10000,\"policyStatus\":\"EXPIRED\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-003 flags expired policy with RULE-002', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-003', status: 'FLAGGED', fraudRule: 'RULE-002' });", "});"] } }]
+    },
+    {
+      "name": "CLM-004 Characterize simultaneous rule precedence",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-004\",\"claimAmount\":12000,\"policyLimit\":10000,\"policyStatus\":\"EXPIRED\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-004 characterizes current precedence as RULE-002', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-004', status: 'FLAGGED', fraudRule: 'RULE-002' });", "});"] } }]
+    },
+    {
+      "name": "CLM-005 Characterize omitted-field handling",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-005\",\"policyNumber\":\"POL-SYN-005\",\"policyLimit\":10000,\"policyStatus\":\"ACTIVE\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-005 characterizes acceptance with omitted optionality undefined', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-005', status: 'ACCEPTED', fraudRule: null });", "});"] } }]
+    },
+    {
+      "name": "CLM-006a Submit duplicate claim ID first time",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-006\",\"policyNumber\":\"POL-SYN-006\",\"customerId\":\"CUS-SYN-006\",\"vehicleNumber\":\"VEH-SYN-006\",\"accidentDate\":\"2026-09-15\",\"claimAmount\":2500,\"claimType\":\"COLLISION\",\"policyLimit\":10000,\"policyStatus\":\"ACTIVE\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-006 first submission is accepted', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-006', status: 'ACCEPTED', fraudRule: null });", "});"] } }]
+    },
+    {
+      "name": "CLM-006b Characterize duplicate claim ID second submission",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-CLM-006\",\"policyNumber\":\"POL-SYN-006\",\"customerId\":\"CUS-SYN-006\",\"vehicleNumber\":\"VEH-SYN-006\",\"accidentDate\":\"2026-09-15\",\"claimAmount\":2500,\"claimType\":\"COLLISION\",\"policyLimit\":10000,\"policyStatus\":\"ACTIVE\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-006 characterizes duplicate acceptance', function () {", "  pm.response.to.have.status(201);", "  pm.expect(pm.response.json()).to.deep.equal({ claimId: 'SYN-CLM-006', status: 'ACCEPTED', fraudRule: null });", "});"] } }]
+    },
+    {
+      "name": "CLM-016 Retrieve created claim",
+      "request": { "method": "GET", "url": "{{baseUrl}}/claims/SYN-CLM-001" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-016 retrieves created claim', function () {", "  pm.response.to.have.status(200);", "  pm.expect(pm.response.json().claimId).to.eql('SYN-CLM-001');", "});"] } }]
+    },
+    {
+      "name": "CLM-017 Retrieve unknown claim",
+      "request": { "method": "GET", "url": "{{baseUrl}}/claims/SYN-CLM-017" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('CLM-017 returns not found', function () {", "  pm.response.to.have.status(404);", "  pm.expect(pm.response.json()).to.deep.equal({ message: 'Claim not found' });", "});"] } }]
+    }
+  ]
+}

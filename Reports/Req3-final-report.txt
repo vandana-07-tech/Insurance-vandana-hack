@@ -1,0 +1,47 @@
+Req3 Final Report: Fraud Detection Validation
+
+Requirement
+Detect duplicate claims and suspicious claim patterns; detect repeated claims from the same customer or vehicle; validate blacklist/watchlist screening; verify identity fraud detection; detect staged accidents, inflated amounts, and forged documents.
+
+Rules and contract gaps
+- Req3 names fraud-detection categories but supplies no matching criteria, thresholds, watchlist/blacklist source, identity verification contract, required evidence, or expected API outcomes.
+- The current API implements only RULE-001 (claimAmount > policyLimit) and RULE-002 (policyStatus is EXPIRED). RULE-002 overwrites RULE-001 if both match.
+- `POST /claims` accepts and stores each request. `GET /claims/:claimId` returns an existing claim or 404 when absent.
+
+Execution summary
+- Scenarios: 16; Newman requests/assertions: 21/21; passed assertions: 21; failed assertions: 0.
+- Passed means the assertions match observed mock behavior. It does not confirm that the requested fraud controls are implemented or satisfy an unspecified business contract.
+- Expected fraud detections: not specified; no confirmed fraud cases.
+- Execution: Newman collection `mock-insurance-api/postman/req3-fraud-detection.postman_collection.json`; synthetic data `mock-insurance-api/test-data/req3-execution-data.json`.
+- Run with `npm run test:req3` from `mock-insurance-api` while the API is listening on port 3000.
+
+Test case results
+Scenario | Test case | Actual result | Outcome
+REQ3-01 | Baseline claim | HTTP 201 ACCEPTED, no fraud rule | PASS - characterization
+REQ3-02 | Same claim ID submitted twice | Both submissions HTTP 201 ACCEPTED | PASS - duplicate detection not implemented; business expectation TBD
+REQ3-03 | Three repeated claims for same customer and vehicle | All three HTTP 201 ACCEPTED | PASS - pattern detection not implemented; criteria TBD
+REQ3-04 | Multiple claims for same customer, different vehicles | Both HTTP 201 ACCEPTED | PASS - repeat-customer detection not implemented; expectation TBD
+REQ3-05 | Multiple claims for same vehicle, different customers | Both HTTP 201 ACCEPTED | PASS - repeat-vehicle detection not implemented; expectation TBD
+REQ3-06 | Synthetic blacklist marker | HTTP 201 ACCEPTED | PASS - blacklist screening unavailable; expectation TBD
+REQ3-07 | Synthetic watchlist marker | HTTP 201 ACCEPTED | PASS - watchlist screening unavailable; expectation TBD
+REQ3-08 | Synthetic identity variation/marker | HTTP 201 ACCEPTED | PASS - identity checks unavailable; expectation TBD
+REQ3-09 | Synthetic staged-accident marker | HTTP 201 ACCEPTED | PASS - accident-pattern detection unavailable; expectation TBD
+REQ3-10 | Amount 1001 against limit 1000 | HTTP 201 FLAGGED RULE-001 | PASS - implemented over-limit comparison only
+REQ3-11 | Amount equals limit | HTTP 201 ACCEPTED, no fraud rule | PASS - strict greater-than boundary
+REQ3-12 | Synthetic forged-document marker | HTTP 201 ACCEPTED | PASS - document validation unavailable; expectation TBD
+REQ3-13 | Expired policy | HTTP 201 FLAGGED RULE-002 | PASS - implemented expiry rule
+REQ3-14 | Both amount-over-limit and expired policy | HTTP 201 FLAGGED RULE-002 | PASS - current precedence characterization; intended precedence TBD
+REQ3-15 | Retrieve submitted claim | HTTP 200, stored claim returned | PASS
+REQ3-16 | Retrieve absent claim | HTTP 404, `Claim not found` | PASS
+
+Findings
+- No API assertion failed and no confirmed API/business-rule defect can be established against the supplied requirements.
+- The API accepts duplicate/repeated claims and synthetic screening markers; this demonstrates missing implementation relative to the named Req3 capabilities, not a proven violation of an undefined decision contract.
+- RULE-001 confirms only an amount-versus-policy-limit comparison. It is not a general inflated-claim detector.
+- Synthetic marker outcomes are characterization only. No real customer or claim is implicated.
+
+Recommendations
+1. Define duplicate matching/idempotency and repeated-customer/vehicle criteria, including time windows and thresholds.
+2. Define blacklist/watchlist data sources and match handling; specify identity verification inputs and outcomes.
+3. Specify measurable staged-accident, inflated-amount, and forged-document indicators and expected decisions.
+4. Implement the missing detection capabilities and assert the specified fraud outcomes in tests. Retain the current boundary and policy-rule tests as separate API behavior checks.

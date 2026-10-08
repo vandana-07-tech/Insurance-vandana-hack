@@ -4,11 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "newman run postman/req2-claim-processing.postman_collection.json --env-var baseUrl=http://localhost:3000",
+    "test:req3": "newman run postman/req3-fraud-detection.postman_collection.json --env-var baseUrl=http://localhost:3000"
   },
   "keywords": [],
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "newman": "^6.2.2"
   }
 }

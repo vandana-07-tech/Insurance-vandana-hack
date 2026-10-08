@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "Req4 Policy API Route Characterization",
+    "description": "Characterizes current mock route availability for REQ4-01 through REQ4-12. The mock registers only /claims routes, so each policy request is expected to return HTTP 404. These assertions document mock behavior only; they are not policy business acceptance criteria. Req4 candidate payloads are unvalidated and expected business outcomes remain TBD.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "REQ4-01 Create nominal candidate",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"policyNumber\":\"SYN-POL-REQ4-001\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/policies"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-01: current mock has no POST /policies route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-02 Create with empty object",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/policies"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-02: current mock has no POST /policies route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-03 Create with no body",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{baseUrl}}/policies"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-03: current mock has no POST /policies route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-04 Update nominal candidate",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"policyNumber\":\"SYN-POL-REQ4-001\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/policies/SYN-POL-REQ4-001"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-04: current mock has no PUT /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-05 Update unknown synthetic ID",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"policyNumber\":\"SYN-POL-REQ4-UNKNOWN\"}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/policies/SYN-POL-REQ4-UNKNOWN"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-05: current mock has no PUT /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-06 Update with empty object",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+        "url": "{{baseUrl}}/policies/SYN-POL-REQ4-001"
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-06: current mock has no PUT /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-07 Cancel nominal synthetic ID",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/policies/SYN-POL-REQ4-001" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-07: current mock has no DELETE /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-08 Cancel unknown synthetic ID",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/policies/SYN-POL-REQ4-UNKNOWN" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-08: current mock has no DELETE /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-09 Cancel with no ID",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/policies/" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-09: current mock has no DELETE /policies/ route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-10 Fetch nominal synthetic ID",
+      "request": { "method": "GET", "url": "{{baseUrl}}/policies/SYN-POL-REQ4-001" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-10: current mock has no GET /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-11 Fetch unknown synthetic ID",
+      "request": { "method": "GET", "url": "{{baseUrl}}/policies/SYN-POL-REQ4-UNKNOWN" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-11: current mock has no GET /policies/:id route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    },
+    {
+      "name": "REQ4-12 Fetch with no ID",
+      "request": { "method": "GET", "url": "{{baseUrl}}/policies/" },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('REQ4-12: current mock has no GET /policies/ route (404)', function () {", "  pm.response.to.have.status(404);", "});"] } }]
+    }
+  ]
+}

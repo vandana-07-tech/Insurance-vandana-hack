@@ -1,0 +1,45 @@
+Req2 Final Report: Claim Processing Validation
+
+Requirement
+Validate claim creation, modification, approval, rejection, closure, status transitions, payouts/settlements, and correct application of policy coverage.
+
+Rules identified
+- BR-01: Claims must support create, modify, approve, reject, and close; detailed constraints are unspecified.
+- BR-02: Status transitions must follow an approved transition matrix; the matrix is not supplied.
+- BR-03: Payouts and settlements must follow approved calculations; formulas and limits are not supplied.
+- BR-04: Policy coverage must be applied; coverage terms and eligibility conditions are not supplied.
+
+Execution summary
+- Scenarios designed: 17 (15 claim/fraud scenarios plus 2 GET checks).
+- API tests executed: 9 Newman collection requests and 9 assertions against the local Node mock, covering 8 scenario IDs (the duplicate case submits twice).
+- Passed: 9 assertions. Failed: 0. Blocked requirement areas: lifecycle operations, status transitions, coverage decisions, payouts, and settlements.
+- Newman 6.2.2 is installed as a development dependency. Run `npm test` from `mock-insurance-api` with the API listening on port 3000.
+- Test data: synthetic only. See mock-insurance-api/test-data/req2-execution-data.json.
+- API test plan: mock-insurance-api/postman/req2-claim-api-test-plan.md.
+
+Test case results
+ID       | Test case                                      | Expected / oracle                            | Actual result                                  | Outcome
+CLM-001  | Baseline active-policy claim                   | HTTP 201; ACCEPTED; no rule                  | HTTP 201; ACCEPTED; no rule                    | PASS
+CLM-002  | Claim amount above policy limit                | HTTP 201; FLAGGED; RULE-001                  | HTTP 201; FLAGGED; RULE-001                    | PASS
+CLM-003  | Expired policy                                 | HTTP 201; FLAGGED; RULE-002                  | HTTP 201; FLAGGED; RULE-002                    | PASS
+CLM-004  | Both amount and expiry conditions              | Characterization; precedence unspecified     | HTTP 201; FLAGGED; RULE-002                    | PASS (characterization)
+CLM-005  | Omit customer/vehicle/incident/amount/type      | Characterization; required fields unspecified| HTTP 201; ACCEPTED                             | PASS (characterization)
+CLM-006  | Submit same claim ID twice                     | Characterization; duplicate contract TBD     | Both HTTP 201; second ACCEPTED                 | PASS (characterization)
+CLM-016  | Retrieve created claim                         | HTTP 200; matching claim ID                  | HTTP 200; SYN-CLM-001                           | PASS
+CLM-017  | Retrieve unknown claim                         | HTTP 404; Claim not found                    | HTTP 404                                      | PASS
+
+Fraud-testing findings
+- Expected flag patterns detected: over-limit amount (RULE-001) and expired policy (RULE-002), both with synthetic data.
+- CLM-004 shows current precedence: RULE-002 overwrites RULE-001 when both checks match. Intended precedence is undefined.
+- CLM-005 shows there is no required-field validation in the current mock. Required-field requirements are undefined.
+- CLM-006 shows duplicate IDs are accepted and appended. Duplicate/idempotency behavior is undefined.
+- These are software test patterns only; no real-world fraud finding is made.
+
+Blocked and missing coverage
+The mock only implements POST /claims and GET /claims/:claimId. It has no modification, approval, rejection, closure, status-transition, payout, or settlement routes. Policy coverage/date rules are not implemented. Req2 also omits required fields, status transition rules, payout formulas, coverage terms, and rejection criteria, preventing definitive expected results for those cases.
+
+Recommendations
+1. Define required claim fields, duplicate/idempotency behavior, and precedence or aggregation for simultaneous fraud rules.
+2. Specify allowed status transitions, validation and authorization rules, and expected responses for each lifecycle action.
+3. Define policy coverage terms and payout/settlement calculations, including limits, exclusions, and boundary cases.
+4. Implement the missing API operations and add positive, negative, and boundary tests for the blocked areas.

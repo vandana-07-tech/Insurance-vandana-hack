@@ -1,0 +1,73 @@
+{
+  "info": {
+    "name": "Req3 Fraud Detection Validation",
+    "description": "Contains 21 ordered requests and a saved collection-level post-response test script that executes one named assertion per request (21 assertions total). These characterize available mock API behavior; acceptance of marker/repeat cases is not evidence that Req3 fraud detection is implemented.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const requestName = pm.info.requestName;",
+          "const scenario = requestName.match(/REQ3-\\d+/)[0];",
+          "const method = pm.request.method;",
+          "const response = pm.response.json();",
+          "if (method === 'GET' && scenario === 'REQ3-15') {",
+          "  pm.test(scenario + ': retrieves existing claim', function () {",
+          "    pm.response.to.have.status(200);",
+          "    pm.expect(response.claimId).to.eql('SYN-REQ3-01');",
+          "    pm.expect(response.customerId).to.eql('SYN-C-001');",
+          "  });",
+          "} else if (method === 'GET' && scenario === 'REQ3-16') {",
+          "  pm.test(scenario + ': missing claim returns 404', function () {",
+          "    pm.response.to.have.status(404);",
+          "    pm.expect(response).to.eql({ message: 'Claim not found' });",
+          "  });",
+          "} else {",
+          "  const submitted = JSON.parse(pm.request.body.raw);",
+          "  let expectedStatus = 'ACCEPTED';",
+          "  let expectedRule = null;",
+          "  if (scenario === 'REQ3-10' && submitted.claimAmount > submitted.policyLimit) {",
+          "    expectedStatus = 'FLAGGED';",
+          "    expectedRule = 'RULE-001';",
+          "  }",
+          "  if (submitted.policyStatus === 'EXPIRED') {",
+          "    expectedStatus = 'FLAGGED';",
+          "    expectedRule = 'RULE-002';",
+          "  }",
+          "  pm.test(scenario + ': POST characterization matches implemented response', function () {",
+          "    pm.response.to.have.status(201);",
+          "    pm.expect(response).to.eql({ claimId: submitted.claimId, status: expectedStatus, fraudRule: expectedRule });",
+          "  });",
+          "}",
+          ""
+        ]
+      }
+    }
+  ],
+  "item": [
+    { "name": "REQ3-01 Baseline", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-01\",\"customerId\":\"SYN-C-001\",\"vehicleNumber\":\"SYN-V-001\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-02 Duplicate first submission", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-02-DUP\",\"customerId\":\"SYN-C-002\",\"vehicleNumber\":\"SYN-V-002\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-02 Duplicate second submission", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-02-DUP\",\"customerId\":\"SYN-C-002\",\"vehicleNumber\":\"SYN-V-002\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-03 Repeated pattern claim A", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-03-A\",\"customerId\":\"SYN-C-003\",\"vehicleNumber\":\"SYN-V-003\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-03 Repeated pattern claim B", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-03-B\",\"customerId\":\"SYN-C-003\",\"vehicleNumber\":\"SYN-V-003\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-03 Repeated pattern claim C", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-03-C\",\"customerId\":\"SYN-C-003\",\"vehicleNumber\":\"SYN-V-003\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-04 Same customer claim A", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-04-A\",\"customerId\":\"SYN-C-004\",\"vehicleNumber\":\"SYN-V-004A\",\"claimAmount\":400,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-04 Same customer claim B", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-04-B\",\"customerId\":\"SYN-C-004\",\"vehicleNumber\":\"SYN-V-004B\",\"claimAmount\":600,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-05 Same vehicle claim A", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-05-A\",\"customerId\":\"SYN-C-005A\",\"vehicleNumber\":\"SYN-V-005\",\"claimAmount\":400,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-05 Same vehicle claim B", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-05-B\",\"customerId\":\"SYN-C-005B\",\"vehicleNumber\":\"SYN-V-005\",\"claimAmount\":600,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-06 Blacklist marker characterization", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-06\",\"customerId\":\"SYN-C-006\",\"vehicleNumber\":\"SYN-V-006\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\",\"blacklistTestMarker\":\"SYN-BL-MATCH-006\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-07 Watchlist marker characterization", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-07\",\"customerId\":\"SYN-C-007\",\"vehicleNumber\":\"SYN-V-007\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\",\"watchlistTestMarker\":\"SYN-WL-MATCH-007\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-08 Identity marker characterization", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-08\",\"customerId\":\"SYN-C-008-VARIANT\",\"vehicleNumber\":\"SYN-V-008\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\",\"identityTestMarker\":\"SYN-IDENTITY-VARIATION-008\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-09 Staged accident marker characterization", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-09\",\"customerId\":\"SYN-C-009\",\"vehicleNumber\":\"SYN-V-009\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\",\"stagedAccidentTestMarker\":\"SYN-STAGED-ACCIDENT-009\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-10 Amount above policy limit", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-10\",\"customerId\":\"SYN-C-010\",\"vehicleNumber\":\"SYN-V-010\",\"claimAmount\":1001,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-11 Amount at policy limit", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-11\",\"customerId\":\"SYN-C-011\",\"vehicleNumber\":\"SYN-V-011\",\"claimAmount\":1000,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-12 Forged document marker characterization", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-12\",\"customerId\":\"SYN-C-012\",\"vehicleNumber\":\"SYN-V-012\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"ACTIVE\",\"forgedDocumentTestMarker\":\"SYN-FORGED-DOC-012\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-13 Expired policy", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-13\",\"customerId\":\"SYN-C-013\",\"vehicleNumber\":\"SYN-V-013\",\"claimAmount\":500,\"policyLimit\":1000,\"policyStatus\":\"EXPIRED\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-14 Both implemented rules", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\"claimId\":\"SYN-REQ3-14\",\"customerId\":\"SYN-C-014\",\"vehicleNumber\":\"SYN-V-014\",\"claimAmount\":1001,\"policyLimit\":1000,\"policyStatus\":\"EXPIRED\"}" }, "url": "{{baseUrl}}/claims" } },
+    { "name": "REQ3-15 Retrieve submitted baseline", "request": { "method": "GET", "url": "{{baseUrl}}/claims/SYN-REQ3-01" } },
+    { "name": "REQ3-16 Retrieve missing claim", "request": { "method": "GET", "url": "{{baseUrl}}/claims/SYN-REQ3-16-ABSENT" } }
+  ]
+}

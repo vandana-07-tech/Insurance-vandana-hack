@@ -1,0 +1,104 @@
+[
+  {
+    "scenarioId": "R2-API-01",
+    "scenario": "Health route",
+    "method": "GET",
+    "path": "/health",
+    "expectedHttpStatus": 200,
+    "expectedBody": { "status": "UP", "application": "Insurance Fraud Detection API" },
+    "classification": "Source characterization"
+  },
+  {
+    "scenarioId": "R2-API-02",
+    "scenario": "Create baseline claim",
+    "method": "POST",
+    "path": "/createClaim",
+    "requestBody": {
+      "claimId": "SYN-REQ2-baseline",
+      "customerId": "SYN-CUST-REQ2-baseline",
+      "vehicleNumber": "SYN-VEH-REQ2-baseline",
+      "incidentDate": "2026-10-12T12:00:00.000Z",
+      "claimAmount": 1000,
+      "policyCoverage": 10000,
+      "policyStartDate": "2000-01-01T00:00:00.000Z",
+      "claimCity": "TestCity",
+      "customerVerified": true
+    },
+    "expectedHttpStatus": 201,
+    "classification": "Source characterization; Req2 business outcome TBD"
+  },
+  {
+    "scenarioId": "R2-COV-01",
+    "scenario": "Claim amount exceeds policy coverage",
+    "method": "POST",
+    "path": "/createClaim",
+    "requestBody": {
+      "claimId": "SYN-REQ2-coverage",
+      "customerId": "SYN-CUST-REQ2-coverage",
+      "vehicleNumber": "SYN-VEH-REQ2-coverage",
+      "incidentDate": "2026-10-11T12:00:00.000Z",
+      "claimAmount": 10001,
+      "policyCoverage": 10000,
+      "policyStartDate": "2000-01-01T00:00:00.000Z",
+      "claimCity": "TestCity",
+      "customerVerified": true
+    },
+    "expectedHttpStatus": 201,
+    "sourceExpectedClaimStatus": "REJECTED",
+    "sourceExpectedFlags": ["EXCEEDS_POLICY_LIMIT", "HIGH_CLAIM_RATIO"],
+    "classification": "Source characterization; coverage acceptance rules TBD"
+  },
+  {
+    "scenarioId": "R2-API-03",
+    "scenario": "Retrieve created claim",
+    "method": "GET",
+    "path": "/claims/{createdClaimId}",
+    "expectedHttpStatus": 200,
+    "classification": "Source characterization"
+  },
+  {
+    "scenarioId": "R2-API-04",
+    "scenario": "Retrieve unknown claim",
+    "method": "GET",
+    "path": "/claims/SYN-REQ2-UNKNOWN",
+    "expectedHttpStatus": 404,
+    "expectedBody": { "message": "Claim Not Found" },
+    "classification": "Source characterization"
+  },
+  {
+    "scenarioId": "R2-API-05",
+    "scenario": "List claims",
+    "method": "GET",
+    "path": "/claims",
+    "expectedHttpStatus": 200,
+    "expectedBodyType": "array",
+    "classification": "Source characterization"
+  },
+  {
+    "scenarioId": "R2-API-06",
+    "scenario": "Validate fraud for baseline synthetic claim",
+    "method": "POST",
+    "path": "/validateFraud",
+    "requestBody": {
+      "customerId": "SYN-CUST-REQ2-validation",
+      "vehicleNumber": "SYN-VEH-REQ2-validation",
+      "incidentDate": "2026-10-10T12:00:00.000Z",
+      "claimAmount": 1000,
+      "policyCoverage": 10000,
+      "policyStartDate": "2000-01-01T00:00:00.000Z",
+      "claimCity": "TestCity",
+      "customerVerified": true
+    },
+    "expectedHttpStatus": 200,
+    "classification": "Source characterization; Req2 fraud outcomes TBD"
+  },
+  {
+    "scenarioId": "R2-API-07",
+    "scenario": "Dashboard summary",
+    "method": "GET",
+    "path": "/dashboard",
+    "expectedHttpStatus": 200,
+    "expectedFields": ["totalClaims", "highRisk", "mediumRisk", "lowRisk"],
+    "classification": "Source characterization"
+  }
+]

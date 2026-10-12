@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Insurance Fraud Testing</title>
+ 
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f6fb;
+      margin: 0;
+      padding: 24px;
+      color: #202b3c;
+    }
+ 
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+ 
+    .panel {
+      background: white;
+      padding: 22px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px #0000000c;
+    }
+ 
+    h1 { color: #183b67; }
+ 
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 130px;
+      padding: 12px;
+      border: 1px solid #ccd5e0;
+      border-radius: 8px;
+      font: inherit;
+    }
+ 
+    button {
+      background: #175cd3;
+      color: white;
+      border: 0;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+ 
+    button:disabled { opacity: 0.6; }
+ 
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+ 
+    .metric {
+      background: #f7f9fc;
+      padding: 15px;
+      border-radius: 8px;
+    }
+ 
+    .metric strong {
+      display: block;
+      font-size: 25px;
+      margin-top: 8px;
+    }
+ 
+    .table-wrap { overflow-x: auto; }
+ 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 650px;
+    }
+ 
+    th, td {
+      padding: 11px;
+      text-align: left;
+      border-bottom: 1px solid #e5eaf0;
+    }
+ 
+    th { background: #f2f5fa; }
+ 
+    .PASS { color: #16803c; font-weight: bold; }
+    .FAIL { color: #c62828; font-weight: bold; }
+    .error { color: #c62828; white-space: pre-wrap; }
+ 
+    @media (max-width: 650px) {
+      .cards { grid-template-columns: repeat(2, 1fr); }
+      body { padding: 12px; }
+    }
+  </style>
+</head>
+ 
+<body>
+<div class="container">
+  <div class="panel">
+    <h1>AI-Powered Insurance Fraud Testing</h1>
+    <p>Enter a business requirement to generate test cases,
+       analyze fraud scenarios, and execute validations.</p>
+ 
+    <label for="requirement"><strong>Insurance Requirement</strong></label>
+    <textarea id="requirement"
+      placeholder="Example: Claims above ₹100000, duplicate claims, inactive policies and incidents after policy expiry must be flagged for fraud."></textarea>
+ 
+    <button id="runButton" onclick="analyzeAndExecute()">
+      Analyze &amp; Execute
+    </button>
+ 
+    <p id="message" role="status"></p>
+  </div>
+ 
+  <div id="dashboard" hidden>
+    <div class="panel">
+      <h2>Execution Summary</h2>
+      <div class="cards">
+        <div class="metric">Total Tests<strong id="total">0</strong></div>
+        <div class="metric">Passed<strong id="passed">0</strong></div>
+        <div class="metric">Failed<strong id="failed">0</strong></div>
+        <div class="metric">Pass Rate<strong id="rate">0%</strong></div>
+      </div>
+    </div>
+ 
+    <div class="panel">
+      <h2>Requirement Analysis</h2>
+      <p id="originalRequirement"></p>
+      <p><strong>Primary focus:</strong> <span id="focus"></span></p>
+      <ul id="checks"></ul>
+    </div>
+ 
+    <div class="panel">
+      <h2>Fraud Scenarios</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Test ID</th>
+              <th>Scenario</th>
+              <th>Risk</th>
+              <th>Expected Decision</th>
+            </tr>
+          </thead>
+          <tbody id="fraudRows"></tbody>
+        </table>
+      </div>
+    </div>
+ 
+    <div class="panel">
+      <h2>Test Execution Results</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Test ID</th>
+              <th>Test Case</th>
+              <th>Expected</th>
+              <th>Actual</th>
+              <th>Status</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="resultRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<script>
+async function analyzeAndExecute() {
+  const requirement =
+    document.getElementById("requirement").value.trim();
+  const button = document.getElementById("runButton");
+  const message = document.getElementById("message");
+  const dashboard = document.getElementById("dashboard");
+ 
+  if (!requirement) {
+    message.textContent = "Please enter a requirement first.";
+    return;
+  }
+ 
+  button.disabled = true;
+  message.textContent = "Analyzing requirement and executing tests...";
+  dashboard.hidden = true;
+ 
+  try {
+    const response = await fetch("/api/analyze-and-execute", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requirement })
+    });
+ 
+    const data = await response.json();
+ 
+    if (!response.ok) {
+      throw new Error(data.error || "Request failed");
+    }
+ 
+    document.getElementById("total").textContent = data.summary.total;
+    document.getElementById("passed").textContent = data.summary.passed;
+    document.getElementById("failed").textContent = data.summary.failed;
+    document.getElementById("rate").textContent =
+      data.summary.passRate + "%";
+ 
+    document.getElementById("originalRequirement").textContent =
+      data.analysis.originalRequirement;
+    document.getElementById("focus").textContent = data.analysis.focus;
+ 
+    const checks = document.getElementById("checks");
+    checks.replaceChildren();
+ 
+    data.analysis.checks.forEach(check => {
+      const li = document.createElement("li");
+      li.textContent = check;
+      checks.appendChild(li);
+    });
+ 
+    const fraudRows = document.getElementById("fraudRows");
+    fraudRows.replaceChildren();
+ 
+    data.fraudScenarios.forEach(scenario => {
+      const row = document.createElement("tr");
+ 
+      [
+        scenario.testCaseId,
+        scenario.scenario,
+        scenario.riskLevel,
+        scenario.expectedFraudDecision
+      ].forEach(value => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        row.appendChild(cell);
+      });
+ 
+      fraudRows.appendChild(row);
+    });
+ 
+    const resultRows = document.getElementById("resultRows");
+    resultRows.replaceChildren();
+ 
+    data.results.forEach(result => {
+      const row = document.createElement("tr");
+      const values = [
+        result.id,
+        result.name,
+        result.expected,
+        result.actual.decision,
+        result.status,
+        result.actual.reasons.join(", ") || "No fraud indicators"
+      ];
+ 
+      values.forEach((value, index) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+ 
+        if (index === 4) {
+          cell.className = result.status;
+        }
+ 
+        row.appendChild(cell);
+      });
+ 
+      resultRows.appendChild(row);
+    });
+ 
+    dashboard.hidden = false;
+    message.textContent = "Analysis and execution completed.";
+  } catch (error) {
+    message.textContent = "Error: " + error.message;
+    dashboard.hidden = true;
+  } finally {
+    button.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

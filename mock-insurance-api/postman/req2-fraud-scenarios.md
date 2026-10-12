@@ -1,0 +1,51 @@
+# Req2 Insurance Claim Scenarios
+
+## Source and scope
+
+Business-rule source: the supplied Req2 requirement summary only. Product, claim type, customer details, field requirements, decision criteria, state-transition rules, coverage terms, payout formulas, settlement timing, and associated response contracts are unspecified unless explicitly stated as current API behavior below.
+
+`R2-01` through `R2-05` are requirement IDs. `RULE-001` and `RULE-002` are current API fraud-rule identifiers, not Req2 requirement IDs. A current API response marked as characterization is not an approved business outcome.
+
+All values and identities in these scenarios are synthetic. These scenarios test software behavior and make no claims about real people.
+
+## Executable Current API Coverage
+
+These rows are represented by the existing `/claims` collection and test plan. There are eight scenario IDs and nine calls because `CLM-006` submits the same synthetic claim twice. Current API outputs are included to make the existing tests runnable; `TBD` notes identify behavior that Req2 does not define.
+
+| Scenario ID | Scenario description | Fraud category | Input modification | Expected result | Expected HTTP status | Severity |
+|---|---|---|---|---|---|---|
+| CLM-001 | Submit a synthetic baseline claim with active policy details. | Genuine claim / baseline | Use `SYN-CLM-001`, `POL-SYN-001`, `CUS-SYN-001`, `VEH-SYN-001`; amount `2500`, limit `10000`, status `ACTIVE`. | Current API: `ACCEPTED`, `fraudRule: null`. Req2 create-validation outcome and field contract are otherwise unspecified. | 201 | Medium |
+| CLM-002 | Submit a claim amount above its supplied policy limit. | Claim amount manipulation / limit boundary probe | Use synthetic claim `SYN-CLM-002`; set `claimAmount: 12000` and `policyLimit: 10000`. | Current API: `FLAGGED`, `fraudRule: RULE-001`. This is an API characterization, not a Req2 coverage or payout decision. | 201 | High |
+| CLM-003 | Submit a claim with an expired policy status. | Expired policy | Use synthetic claim `SYN-CLM-003`; set `policyStatus: EXPIRED`. | Current API: `FLAGGED`, `fraudRule: RULE-002`. Req2 coverage eligibility and resulting claim state are unspecified. | 201 | High |
+| CLM-004 | Submit a claim that meets both the amount-over-limit and expired-policy checks. | Multiple conditions / precedence | Use synthetic claim `SYN-CLM-004`; set amount `12000`, limit `10000`, and status `EXPIRED`. | Current API characterization: `FLAGGED`, `fraudRule: RULE-002`. Which condition should take precedence is TBD; do not treat this observed response as an approved contract. | 201 | High |
+| CLM-005 | Characterize submission when customer and incident details are omitted. | Missing mandatory information | Submit synthetic claim `SYN-CLM-005` with policy number, limit, and status only; omit `customerId`, `vehicleNumber`, `accidentDate`, `claimAmount`, and `claimType`. | Current API characterization: `ACCEPTED`, `fraudRule: null`. Whether any omitted field is mandatory is TBD. | 201 | High |
+| CLM-006 | Submit the same synthetic claim ID twice in the same API process. | Duplicate / suspicious repeated claim | Submit the documented `SYN-CLM-006` body twice sequentially, unchanged. | Current API characterization for each call: `ACCEPTED`, `fraudRule: null`. Duplicate detection or idempotency behavior is TBD. | 201 per call (2 calls) | High |
+| CLM-016 | Retrieve the claim created by CLM-001. | Claim retrieval / integrity | After CLM-001 in the same API process, request `GET /claims/SYN-CLM-001`. | Return the stored raw request body. | 200 | Medium |
+| CLM-017 | Retrieve an unknown synthetic claim ID. | Invalid claim identifier | Request `GET /claims/SYN-CLM-017`. | Current API: `{ "message": "Claim not found" }`. This is a lookup response, not a policy-number validation rule. | 404 | Low |
+
+## Blocked or Contract-TBD Scenarios
+
+These cases are not executable against the documented current API contract, or their expected business outcomes are unspecified. `BLOCKED` is a test-planning status, not an expected API response. No endpoint, status code, validation rule, or business outcome is inferred for these cases.
+
+| Scenario ID | Scenario description | Fraud category | Input modification | Expected result | Expected HTTP status | Severity |
+|---|---|---|---|---|---|---|
+| CLM-B01 | Submit a claim with an unknown or invalid synthetic policy number. | Invalid policy / policy number manipulation | Change `policyNumber` to an unrecognized synthetic value. | BLOCKED — policy-number validity criteria and result are unspecified; confirm contract before asserting an outcome. | N/A — contract TBD | High |
+| CLM-B02 | Submit a claim with a future accident date. | Future accident date | Set the synthetic claim's accident date after the test execution date. | BLOCKED — date validation criteria and result are unspecified. | N/A — contract TBD | High |
+| CLM-B03 | Submit a claim for an accident before policy start. | Accident before policy start | Set the synthetic accident date earlier than the policy start date. | BLOCKED — policy start-date field semantics and eligibility result are unspecified. | N/A — contract TBD | High |
+| CLM-B04 | Submit a claim for an accident after policy expiry. | Accident after policy expiry | Set the synthetic accident date later than the policy expiry date. | BLOCKED — expiry-date representation and eligibility result are unspecified. | N/A — contract TBD | High |
+| CLM-B05 | Submit separate claims for the same synthetic vehicle. | Multiple claims for one vehicle | Keep the same synthetic vehicle number and vary claim IDs and incident details. | BLOCKED — repeat-claim criteria and outcomes are unspecified. | N/A — contract TBD | Medium |
+| CLM-B06 | Submit separate claims for the same synthetic customer. | Multiple claims for one customer | Keep the same synthetic customer ID and vary claim IDs and incident details. | BLOCKED — repeat-claim criteria and outcomes are unspecified. | N/A — contract TBD | Medium |
+| CLM-B07 | Probe the exact claim-amount/policy-limit boundary. | Claim amount boundary | Set synthetic claim amount equal to the supplied policy limit; compare with a value just below it. | BLOCKED — the current characterization covers an amount above the limit only; equal/below-limit business treatment is unspecified. | N/A — boundary contract TBD | Medium |
+| CLM-B08 | Submit a claim with an unsupported claim type. | Invalid claim type | Change `claimType` to a synthetic unsupported value. | BLOCKED — valid claim types and invalid-type behavior are unspecified. | N/A — contract TBD | Medium |
+| CLM-B09 | Modify the policy number on an otherwise baseline synthetic claim. | Policy number manipulation | Replace the baseline policy number with a malformed or mismatched synthetic value. | BLOCKED — policy-number validation and mismatch behavior are unspecified. | N/A — contract TBD | High |
+| CLM-B10 | Modify the customer ID on an otherwise baseline synthetic claim. | Customer ID manipulation | Replace the baseline customer ID with a different synthetic value. | BLOCKED — customer identity validation and mismatch behavior are unspecified. | N/A — contract TBD | Medium |
+| CLM-B11 | Modify the vehicle number on an otherwise baseline synthetic claim. | Vehicle number manipulation | Replace the baseline vehicle number with a different synthetic value. | BLOCKED — vehicle validation and mismatch behavior are unspecified. | N/A — contract TBD | Medium |
+| CLM-B12 | Probe repeated submissions with the same synthetic customer, vehicle, incident date, and amount but distinct claim IDs. | Suspicious repeated claims | Submit two claims with distinct synthetic IDs and the same synthetic customer, vehicle, incident date, and amount. | BLOCKED — the existing duplicate-ID characterization does not define duplicate-content detection or repeat-claim outcomes. | N/A — contract TBD | High |
+| CLM-B13 | Modify an existing claim. | Claim modification | Attempt to change a synthetic claim after creation. | BLOCKED — no modification route; editable fields, restrictions, and response contract are unspecified (R2-01). | N/A — route/contract unavailable | High |
+| CLM-B14 | Approve a claim. | Approval decision | Attempt approval of a synthetic created claim. | BLOCKED — no approval route or approval criteria/status contract (R2-02). | N/A — route/contract unavailable | High |
+| CLM-B15 | Reject a claim. | Rejection decision | Attempt rejection of a synthetic created claim. | BLOCKED — no rejection route or rejection criteria/status contract (R2-02). | N/A — route/contract unavailable | High |
+| CLM-B16 | Close a claim. | Claim closure | Attempt closure of a synthetic claim. | BLOCKED — no closure route or closure criteria/status contract (R2-02). | N/A — route/contract unavailable | High |
+| CLM-B17 | Exercise allowed and disallowed claim status transitions. | Status-transition manipulation | Attempt transitions between proposed synthetic claim states after the transition contract and routes are defined. | BLOCKED — allowed transition matrix, error behavior, and transition routes are unspecified (R2-03). | N/A — route/contract unavailable | High |
+| CLM-B18 | Validate claim payout calculation and timing. | Claim amount / payout manipulation | Use synthetic claim and policy values once payout inputs and approved calculation rules are defined. | BLOCKED — payout formula, limits, timing, and response contract are unspecified (R2-04). | N/A — route/contract unavailable | High |
+| CLM-B19 | Validate settlement calculation and repeat handling. | Settlement / repeated transaction | Submit a synthetic settlement request once settlement inputs and repeat-handling rules are defined. | BLOCKED — settlement formula, timing, idempotency, and response contract are unspecified (R2-04). | N/A — route/contract unavailable | High |
+| CLM-B20 | Validate coverage eligibility, exclusions, and payable limit behavior. | Policy coverage manipulation | Vary synthetic coverage, dates, and claim values after applicable coverage terms are defined. | BLOCKED — coverage terms, exclusions, limits, and expected outcomes are unspecified (R2-05). CLM-002's `RULE-001` flag is not proof of coverage application. | N/A — contract TBD | High |

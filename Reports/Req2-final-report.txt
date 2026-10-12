@@ -1,45 +1,49 @@
 Req2 Final Report: Claim Processing Validation
 
 Requirement
-Validate claim creation, modification, approval, rejection, closure, status transitions, payouts/settlements, and correct application of policy coverage.
+Validate claim creation, modification, approval, rejection, and closure; verify claim status transitions; validate claim payouts and settlements; ensure policy coverage is correctly applied.
 
-Rules identified
-- BR-01: Claims must support create, modify, approve, reject, and close; detailed constraints are unspecified.
-- BR-02: Status transitions must follow an approved transition matrix; the matrix is not supplied.
-- BR-03: Payouts and settlements must follow approved calculations; formulas and limits are not supplied.
-- BR-04: Policy coverage must be applied; coverage terms and eligibility conditions are not supplied.
+Business rules identified
+- R2-01: Claim creation must be validated; required fields and outcomes are unspecified.
+- R2-02: Claim modification must be validated; editable fields and restrictions are unspecified.
+- R2-03: Claim approval, rejection, and closure must be validated; eligibility and resulting states are unspecified.
+- R2-04: Claim status transitions must be verified; the allowed transition matrix is not provided.
+- R2-05: Payouts and settlements must be validated; formulas, limits, timing, and repeat behavior are unspecified.
+- R2-06: Policy coverage must be applied; coverage terms, exclusions, dates, limits, and expected payable amounts are unspecified.
 
 Execution summary
-- Scenarios designed: 17 (15 claim/fraud scenarios plus 2 GET checks).
-- API tests executed: 9 Newman collection requests and 9 assertions against the local Node mock, covering 8 scenario IDs (the duplicate case submits twice).
-- Passed: 9 assertions. Failed: 0. Blocked requirement areas: lifecycle operations, status transitions, coverage decisions, payouts, and settlements.
-- Newman 6.2.2 is installed as a development dependency. Run `npm test` from `mock-insurance-api` with the API listening on port 3000.
-- Test data: synthetic only. See mock-insurance-api/test-data/req2-execution-data.json.
-- API test plan: mock-insurance-api/postman/req2-claim-api-test-plan.md.
+- API base URL used: http://localhost:3000.
+- Latest rerun after correcting the server startup source: Newman executed 8 requests with 8 assertions; 0 passed and 8 failed against the expected source route contracts. All requests returned HTTP 404; there were no transport errors.
+- Seven requests returned HTML 404 responses. The unknown-claim lookup returned JSON 404 with `Claim not found`, differing from the current source's expected `Claim Not Found` message.
+- The created-claim lookup used an empty claim ID because claim creation returned 404; Newman counted its failed assertion, but retrieval of a successfully created claim was not validated.
+- The test-only `GET /__test/ping` route is gated by `ENABLE_TEST_ENDPOINTS=true`; it also returned HTML 404, confirming the active listener is not running the corrected workspace server.
+- These are endpoint availability/contract characterization failures. They are not business-rule outcomes because the API handlers were not reached.
+- Root cause found after this run: a stray standalone `S` in the workspace server startup section caused a `ReferenceError` before the API could register its routes. The stray token has been removed and `node --check mock-insurance-api/server.js` passes.
+- A stale Node process (PID 33332) still owns port 3000. Stopping it was denied by Windows, so the corrected server could not be started here; the latest rerun still exercised that stale listener.
+- Source-aligned collection: mock-insurance-api/postman/req2-current-api-characterization.postman_collection.json.
+- Synthetic execution records: mock-insurance-api/test-data/req2-current-api-execution-data.json.
+- The workspace source declares port 3000 and defines the probed routes. Once the stale listener is stopped and the corrected source is restarted, rerun the collection to obtain API route results.
 
 Test case results
-ID       | Test case                                      | Expected / oracle                            | Actual result                                  | Outcome
-CLM-001  | Baseline active-policy claim                   | HTTP 201; ACCEPTED; no rule                  | HTTP 201; ACCEPTED; no rule                    | PASS
-CLM-002  | Claim amount above policy limit                | HTTP 201; FLAGGED; RULE-001                  | HTTP 201; FLAGGED; RULE-001                    | PASS
-CLM-003  | Expired policy                                 | HTTP 201; FLAGGED; RULE-002                  | HTTP 201; FLAGGED; RULE-002                    | PASS
-CLM-004  | Both amount and expiry conditions              | Characterization; precedence unspecified     | HTTP 201; FLAGGED; RULE-002                    | PASS (characterization)
-CLM-005  | Omit customer/vehicle/incident/amount/type      | Characterization; required fields unspecified| HTTP 201; ACCEPTED                             | PASS (characterization)
-CLM-006  | Submit same claim ID twice                     | Characterization; duplicate contract TBD     | Both HTTP 201; second ACCEPTED                 | PASS (characterization)
-CLM-016  | Retrieve created claim                         | HTTP 200; matching claim ID                  | HTTP 200; SYN-CLM-001                           | PASS
-CLM-017  | Retrieve unknown claim                         | HTTP 404; Claim not found                    | HTTP 404                                      | PASS
+ID          | Test case                         | Request                      | Expected from current source             | Actual at http://localhost:3000              | Outcome
+R2-API-01   | Health route                      | GET /health                  | HTTP 200; JSON health status              | HTTP 404; HTML response                      | FAIL - endpoint unavailable
+R2-API-02   | Create baseline claim             | POST /createClaim            | HTTP 201; claim and fraud result JSON     | HTTP 404; HTML response                      | FAIL - endpoint unavailable
+R2-COV-01   | Claim amount exceeds coverage     | POST /createClaim            | HTTP 201; REJECTED; coverage flags        | HTTP 404; HTML response                      | FAIL - endpoint unavailable
+R2-API-03   | Retrieve created claim            | GET /claims/{createdClaimId} | HTTP 200; created claim JSON              | HTTP 404; HTML response; ID unset           | BLOCKED - create failed
+R2-API-04   | Retrieve unknown claim            | GET /claims/{unknownClaimId} | HTTP 404; {"message":"Claim Not Found"} | HTTP 404; JSON message "Claim not found"    | FAIL - response mismatch
+R2-API-05   | List claims                       | GET /claims                  | HTTP 200; JSON array                      | HTTP 404; HTML response                      | FAIL - endpoint unavailable
+R2-API-06   | Validate fraud                    | POST /validateFraud          | HTTP 200; fraud result JSON               | HTTP 404; HTML response                      | FAIL - endpoint unavailable
+R2-API-07   | Dashboard summary                 | GET /dashboard               | HTTP 200; numeric risk counts             | HTTP 404; HTML response                      | FAIL - endpoint unavailable
 
-Fraud-testing findings
-- Expected flag patterns detected: over-limit amount (RULE-001) and expired policy (RULE-002), both with synthetic data.
-- CLM-004 shows current precedence: RULE-002 overwrites RULE-001 when both checks match. Intended precedence is undefined.
-- CLM-005 shows there is no required-field validation in the current mock. Required-field requirements are undefined.
-- CLM-006 shows duplicate IDs are accepted and appended. Duplicate/idempotency behavior is undefined.
-- These are software test patterns only; no real-world fraud finding is made.
-
-Blocked and missing coverage
-The mock only implements POST /claims and GET /claims/:claimId. It has no modification, approval, rejection, closure, status-transition, payout, or settlement routes. Policy coverage/date rules are not implemented. Req2 also omits required fields, status transition rules, payout formulas, coverage terms, and rejection criteria, preventing definitive expected results for those cases.
+Requirement coverage and gaps
+- Claim creation, coverage behavior, retrieval, fraud validation, and dashboard could only be probed at the route level; no successful route execution was available at the configured URL.
+- Modification, explicit approval/rejection, closure, status-transition, payout, and settlement operations are absent from the current source API. No routes for these operations were invented or tested.
+- Req2 defines none of the required fields, valid state transitions, decision criteria, coverage terms, payout or settlement formulas, or error contracts. Business acceptance outcomes for those areas remain TBD.
+- The Req2 suite uses synthetic data only. No real-world fraud determination was made.
 
 Recommendations
-1. Define required claim fields, duplicate/idempotency behavior, and precedence or aggregation for simultaneous fraud rules.
-2. Specify allowed status transitions, validation and authorization rules, and expected responses for each lifecycle action.
-3. Define policy coverage terms and payout/settlement calculations, including limits, exclusions, and boundary cases.
-4. Implement the missing API operations and add positive, negative, and boundary tests for the blocked areas.
+1. Stop the stale Node listener on port 3000 from the terminal that started it, then start the corrected workspace server from the project root with `$env:ENABLE_TEST_ENDPOINTS = 'true'; node mock-insurance-api/server.js`.
+2. Confirm `GET http://localhost:3000/__test/ping` identifies this server, then rerun the collection; rerun claim retrieval after creation returns a populated claim ID.
+3. Define request/response schemas, required fields, approval/rejection criteria, and the allowed claim status-transition matrix.
+4. Define coverage eligibility and calculation rules, along with payout/settlement formulas, limits, timing, idempotency, and error behavior.
+5. Implement modification, approval, rejection, closure, payout, and settlement operations, then add positive, negative, and boundary tests based on the approved contract.

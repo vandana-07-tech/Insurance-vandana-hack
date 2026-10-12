@@ -1,0 +1,299 @@
+{
+  "info": {
+    "name": "Req2 Claim Processing API Characterization",
+    "description": "Characterization checks for the current source API at http://localhost:3000. Business outcomes not specified by Req2 are not treated as acceptance criteria.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "createdClaimId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.collectionVariables.set('runId', Date.now().toString());"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "R2-API-01 Health route",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Health route returns source contract JSON', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.status).to.eql('UP');",
+              "    pm.expect(body.application).to.eql('Insurance Fraud Detection API');",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-02 Create baseline claim",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"claimId\": \"SYN-REQ2-{{runId}}\",\n  \"customerId\": \"SYN-CUST-REQ2-{{runId}}\",\n  \"vehicleNumber\": \"SYN-VEH-REQ2-{{runId}}\",\n  \"incidentDate\": \"2026-10-12T12:00:00.000Z\",\n  \"claimAmount\": 1000,\n  \"policyCoverage\": 10000,\n  \"policyStartDate\": \"2000-01-01T00:00:00.000Z\",\n  \"claimCity\": \"TestCity\",\n  \"customerVerified\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/createClaim"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Create route returns a stored claim with fraud result fields', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.claimId).to.eql('SYN-REQ2-' + pm.collectionVariables.get('runId'));",
+              "    pm.expect(body.claimStatus).to.be.a('string');",
+              "    pm.expect(body.fraudFlags).to.be.an('array');",
+              "    pm.expect(body.fraudScore).to.be.a('number');",
+              "    pm.collectionVariables.set('createdClaimId', body.claimId);",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-COV-01 Claim amount exceeds policy coverage",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"claimId\": \"SYN-COV-REQ2-{{runId}}\",\n  \"customerId\": \"SYN-CUST-COV-{{runId}}\",\n  \"vehicleNumber\": \"SYN-VEH-COV-{{runId}}\",\n  \"incidentDate\": \"2026-10-11T12:00:00.000Z\",\n  \"claimAmount\": 10001,\n  \"policyCoverage\": 10000,\n  \"policyStartDate\": \"2000-01-01T00:00:00.000Z\",\n  \"claimCity\": \"TestCity\",\n  \"customerVerified\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/createClaim"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Coverage probe returns source rejection and coverage flags', function () {",
+              "  pm.expect(pm.response.code).to.eql(201);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.claimStatus).to.eql('REJECTED');",
+              "    pm.expect(body.fraudFlags).to.include('EXCEEDS_POLICY_LIMIT');",
+              "    pm.expect(body.fraudFlags).to.include('HIGH_CLAIM_RATIO');",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-03 Retrieve created claim",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/claims/{{createdClaimId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Created claim can be retrieved', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    pm.expect(pm.response.json().claimId).to.eql(pm.collectionVariables.get('createdClaimId'));",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-04 Unknown claim lookup",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/claims/SYN-REQ2-UNKNOWN-{{runId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Unknown claim returns source not-found response', function () {",
+              "  pm.expect(pm.response.code).to.eql(404);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    pm.expect(pm.response.json()).to.deep.equal({ message: 'Claim Not Found' });",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-05 List claims",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('List route returns a claims array', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    pm.expect(pm.response.json()).to.be.an('array');",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-06 Fraud validation route",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"SYN-CUST-VAL-{{runId}}\",\n  \"vehicleNumber\": \"SYN-VEH-VAL-{{runId}}\",\n  \"incidentDate\": \"2026-10-10T12:00:00.000Z\",\n  \"claimAmount\": 1000,\n  \"policyCoverage\": 10000,\n  \"policyStartDate\": \"2000-01-01T00:00:00.000Z\",\n  \"claimCity\": \"TestCity\",\n  \"customerVerified\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/validateFraud"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Fraud validation returns a fraud result', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.fraudScore).to.be.a('number');",
+              "    pm.expect(body.fraudFlags).to.be.an('array');",
+              "    pm.expect(body.claimStatus).to.be.a('string');",
+              "    pm.expect(body.riskLevel).to.be.a('string');",
+              "    pm.expect(body.recommendation).to.be.a('string');",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "R2-API-07 Dashboard summary",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/dashboard"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Dashboard returns numeric risk counts', function () {",
+              "  pm.expect(pm.response.code).to.eql(200);",
+              "  const contentType = pm.response.headers.get('Content-Type') || '';",
+              "  pm.expect(contentType.toLowerCase()).to.include('application/json');",
+              "  if (contentType.toLowerCase().includes('application/json')) {",
+              "    const body = pm.response.json();",
+              "    pm.expect(body.totalClaims).to.be.a('number');",
+              "    pm.expect(body.highRisk).to.be.a('number');",
+              "    pm.expect(body.mediumRisk).to.be.a('number');",
+              "    pm.expect(body.lowRisk).to.be.a('number');",
+              "    pm.expect(body.highRisk + body.mediumRisk + body.lowRisk).to.eql(body.totalClaims);",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

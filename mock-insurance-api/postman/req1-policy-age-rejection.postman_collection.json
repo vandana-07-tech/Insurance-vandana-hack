@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "INS-1456 Policy Age Claim Rejection",
+    "description": "Validates INS-1456 against POST /claims at http://localhost:3000 using the legacy claim response contract.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Submit INS-1456 claim",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"claimId\": \"{{claimId}}\",\n  \"claimAmount\": {{claimAmount}},\n  \"policyLimit\": {{policyCoverage}},\n  \"policyStatus\": \"ACTIVE\",\n  \"claimType\": \"GENERAL\",\n  \"policyAgeDays\": {{policyAgeDays}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/claims"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const scenarioId = pm.iterationData.get('scenarioId');",
+              "const shouldReject = ['INS-1456-01', 'INS-1456-06', 'INS-1456-07'].includes(scenarioId);",
+              "const submitted = JSON.parse(pm.variables.replaceIn(pm.request.body.raw));",
+              "const response = pm.response.json();",
+              "",
+              "pm.test(scenarioId + ': HTTP status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test(scenarioId + ': iteration data is present in request body', function () {",
+              "    pm.expect(submitted.claimId).to.eql(pm.iterationData.get('claimId'));",
+              "    pm.expect(submitted.claimAmount).to.eql(Number(pm.iterationData.get('claimAmount')));",
+              "    pm.expect(submitted.policyLimit).to.eql(Number(pm.iterationData.get('policyCoverage')));",
+              "    pm.expect(submitted.policyAgeDays).to.eql(Number(pm.iterationData.get('policyAgeDays')));",
+              "});",
+              "",
+              "pm.test(scenarioId + ': response has legacy claim fields', function () {",
+              "    pm.expect(response.claimId).to.eql(pm.iterationData.get('claimId'));",
+              "    pm.expect(response.status).to.be.a('string');",
+              "    pm.expect(response).to.have.property('fraudRule');",
+              "});",
+              "",
+              "if (shouldReject) {",
+              "    pm.test(scenarioId + ': rejected when both INS-1456 conditions apply', function () {",
+              "        pm.expect(response.status).to.eql('REJECTED');",
+              "    });",
+              "} else {",
+              "    pm.test(scenarioId + ': claim not rejected by INS-1456', function () {",
+              "        pm.expect(response.status).not.to.eql('REJECTED');",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

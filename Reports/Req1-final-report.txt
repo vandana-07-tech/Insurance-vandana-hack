@@ -1,0 +1,42 @@
+Req1 Final Report: INS-1456 High-Value Claim on New Policy
+
+Requirement
+Reject a claim when both strict conditions hold:
+- Claim Amount > INR 100,000
+- Policy Age < 30 days
+
+Execution summary
+- Latest orchestrated run: 2026-10-12.
+- API URL: http://localhost:3000/claims (POST).
+- Newman requests/iterations: 10 / 10; all returned HTTP 201 and there were no request errors.
+- Assertions: 40 total; 37 passed, 3 failed.
+- All 10 iteration-data assertions passed: each outbound request contained the row's claim ID, claim amount, mapped policy limit, and policy age. Newman is loading and sending the test data correctly.
+- Scenario results: 7 pass (not rejected by this rule); 3 fail (rejection expected, actual status ACCEPTED).
+- Test data: synthetic; mock-insurance-api/test-data/req1-execution-data.json.
+- Collection: mock-insurance-api/postman/req1-policy-age-rejection.postman_collection.json.
+- Request values used policyLimit 250000, policyStatus ACTIVE, claimType GENERAL, and supplied policyAgeDays, isolating the Req1 combination from unrelated legacy conditions.
+
+Test case results
+ID          | Test case                                        | Amount (INR) | Policy age | Expected by Req1     | Actual response                     | Outcome
+INS-1456-01 | Both conditions true                            | 120,000      | 20 days    | REJECTED             | HTTP 201; ACCEPTED                  | FAIL
+INS-1456-02 | Amount equals threshold                         | 100,000      | 29 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-03 | Policy age equals threshold                     | 100,001      | 30 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-04 | Both amount and age at boundaries               | 100,000      | 30 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-05 | Amount below threshold                          | 99,999       | 29 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-06 | Amount just above threshold and age below 30    | 100,001      | 29 days    | REJECTED             | HTTP 201; ACCEPTED                  | FAIL
+INS-1456-07 | High amount and policy age below 30             | 150,000      | 29 days    | REJECTED             | HTTP 201; ACCEPTED                  | FAIL
+INS-1456-08 | High amount and policy age above 30             | 150,000      | 31 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-09 | High amount with mature policy                  | 200,000      | 45 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+INS-1456-10 | Low amount with new policy                      | 50,000       | 10 days    | Not rejected by rule | HTTP 201; ACCEPTED                  | PASS
+
+Findings
+- The tested legacy POST /claims endpoint accepts the policyAgeDays field but does not evaluate it. Its implemented rules compare claim amount to policyLimit, check policyStatus, and apply claim-type thresholds; it does not enforce the Req1 amount-and-age combination.
+- All three cases meeting both INS-1456 conditions were returned as ACCEPTED instead of REJECTED. The seven cases not meeting both conditions were not rejected, consistent with this rule's expected result only.
+- The response contract for rejection (HTTP status, body status, and reason field) is not defined by the requirement. This test asserts body status REJECTED as the business decision; HTTP 201 is the observed creation response.
+- Policy-age calculation reference date and calendar-day versus elapsed-day semantics are unspecified.
+- This run used synthetic data and does not confirm real-world fraud.
+
+Recommendations
+1. Implement the combined rule on the claim-processing endpoint: claimAmount > 100000 AND policyAgeDays < 30 must result in rejection.
+2. Define how policy age is computed and document the rejection response contract.
+3. Rerun all 10 cases after implementation, retaining exact-threshold and single-condition-false tests as regression coverage.

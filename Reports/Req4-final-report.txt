@@ -1,0 +1,44 @@
+Req4 Final Report: Policy API Route Characterization
+
+Requirement
+Policy APIs: Create Policy, Update Policy, Cancel Policy, Fetch Policy Details.
+
+Requirement analysis
+- The requirement names four operations only. It defines no request/response schema, required fields, validation, authentication, policy state transitions, idempotency, or expected HTTP responses.
+- REST route conventions were used only to probe the mock: POST /policies, PUT /policies/{id}, DELETE /policies/{id}, and GET /policies/{id}. These paths and methods are not specified by Req4 and should be confirmed.
+- No fraud rules or fraud indicators are specified; no fraud cases can be assessed or confirmed.
+
+Execution summary
+- Scenarios: 12.
+- Newman: 12 requests, 12 characterization assertions passed, 0 assertion failures, 0 request errors.
+- Actual policy feature results: 0 verified; all 12 requests returned HTTP 404 because the current mock exposes no policy routes.
+- The Newman assertions passing means they correctly observed the 404 responses. It does not mean that any policy operation passed its functional test.
+- Synthetic candidate policy ID and payload only; payload schema is unvalidated and no real personal information was used.
+- Collection: mock-insurance-api/postman/req4-policy-api.postman_collection.json.
+- Data: mock-insurance-api/test-data/req4-execution-data.json.
+
+Test case results
+Scenario | Test case | Probe | Expected business outcome | Actual result | Functional disposition
+REQ4-01 | Create nominal candidate | POST /policies; synthetic candidate body | TBD | HTTP 404 | Unavailable; create not verified
+REQ4-02 | Create with empty object | POST /policies; {} | TBD | HTTP 404 | Unavailable; validation not reached
+REQ4-03 | Create with no body | POST /policies; no body | TBD | HTTP 404 | Unavailable; validation not reached
+REQ4-04 | Update nominal candidate | PUT /policies/SYN-POL-REQ4-001; candidate body | TBD | HTTP 404 | Unavailable; update not verified
+REQ4-05 | Update unknown synthetic ID | PUT /policies/SYN-POL-REQ4-UNKNOWN; candidate body | TBD | HTTP 404 | Unavailable; unknown-ID behavior not distinguishable
+REQ4-06 | Update with empty object | PUT /policies/SYN-POL-REQ4-001; {} | TBD | HTTP 404 | Unavailable; validation not reached
+REQ4-07 | Cancel nominal synthetic ID | DELETE /policies/SYN-POL-REQ4-001 | TBD | HTTP 404 | Unavailable; cancellation not verified
+REQ4-08 | Cancel unknown synthetic ID | DELETE /policies/SYN-POL-REQ4-UNKNOWN | TBD | HTTP 404 | Unavailable; unknown-ID behavior not distinguishable
+REQ4-09 | Cancel with no ID | DELETE /policies/ | TBD | HTTP 404 | Unavailable; missing-ID behavior not distinguishable
+REQ4-10 | Fetch nominal synthetic ID | GET /policies/SYN-POL-REQ4-001 | TBD | HTTP 404 | Unavailable; fetch not verified
+REQ4-11 | Fetch unknown synthetic ID | GET /policies/SYN-POL-REQ4-UNKNOWN | TBD | HTTP 404 | Unavailable; unknown-ID behavior not distinguishable
+REQ4-12 | Fetch with no ID | GET /policies/ | TBD | HTTP 404 | Unavailable; missing-ID behavior not distinguishable
+
+Findings
+- None of the named policy capabilities is exposed at the probed routes in the current mock. This is a Req4 coverage gap; detailed business or validation defects cannot be established from this requirement.
+- Empty-body, missing-body, unknown-ID, and nominal behavior remain unassessed because route handling did not reach a policy implementation.
+- No fraud-rule violation can be identified because Req4 provides no fraud rules.
+
+Recommendations
+1. Confirm the intended API methods and paths, then implement and mount Create, Update, Cancel, and Fetch Policy operations.
+2. Define policy request/response fields, required-field and format validation, authentication/authorization, state transitions, idempotency, and HTTP/error behavior.
+3. Rerun these 12 probes after the endpoints are available and replace route-characterization assertions with contract-based functional assertions.
+4. Add fraud scenarios only if policy-related fraud controls are explicitly specified.
